@@ -4,6 +4,16 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.http import Http404
 
+try:
+    from mptt.models import MPTTModel as MpttModel
+except ImportError:
+    MpttModel = None
+
+try:
+    from treebeard.models import Node as TreebeardModel
+except ImportError:
+    TreebeardModel = None
+
 
 class CleanURLHandler():
     def __init__(self, *args):
@@ -18,33 +28,29 @@ class CleanURLHandler():
 
         # try to define `get_slug` method automatically if possible
         parent_model = None
-        for i, (queryset, view) in enumerate(self.settings):
+        for queryset, view in self.settings:
             model = queryset.model
 
             if hasattr(model, 'get_slug'):  # if user already defined `get_slug` method, leave it as is
                 continue
 
-            # define how to get slug for instance depending on its class
-            if isinstance(instance, MPTTModel):
+            # define how to get slug for model depending on its class
+            if issubclass(model, MpttModel):
                 get_instance_slug = lambda instance: '/'.join(instance.get_ancestors(include_self=True).values_list('slug', flat=True))
-            # elif isinstance(instance, TreeBeard):  # ?????????????//
-            #     pass
+            elif issubclass(model, TreebeardModel):
+                get_instance_slug = lambda instance: '/'.join([ancestor.slug for ancestor in (list(instance.get_ancestors()) + [instance])])
             else:
                 get_instance_slug = attrgetter('slug')
 
             # define how to get parent model's slug
-            if not parent_model:
-                parent_field = None
-            else:
-                for field in model._meta.fields:
-                    if isinstance(field, (models.ForeignKey, models.OneToOneField)) and field.related_model == parent_model:
-                        # TODO: only first match is captured!!!!!!!!!!!!!
-                        parent_field = field.name
-                        break
+            parent_field = None  # default
+            if parent_model:
+                related_fields = [field for field in model._meta.fields if (isinstance(field, (models.ForeignKey, models.OneToOneField)) and field.related_model == parent_model)]
+                if len(related_fields) == 1:
+                    parent_field = related_fields[0].name
                 else:
-                    raise ImproperlyConfigured('Cannot reslove relation from {child_model} to {parent_model}, please define `get_slug` method on {child_model} explicitly'.format(child_model=model, parent_model=parent_model))
+                    raise ImproperlyConfigured('Cannot reslove relation from {child_model} to {parent_model}, please define `get_slug` method on {child_model} explicitly'.format(child_model=model, parent_model=parent_model))                    
 
-            
             get_parent_slug = lambda instance: getattr(instance, parent_field).get_slug() if parent_field else ''
 
             # define get_slug == parent model's slug + instance's slug
