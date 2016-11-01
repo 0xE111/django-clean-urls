@@ -1,0 +1,11 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}
+    Photographers
+{% endblock %}
+
+{% block content %}
+    {% for photographer in object_list %}
+        <a href="{{ photographer.get_absolute_url }}">{{ photographer.slug }}</a><br>
+    {% endfor %}
+{% endblock %}

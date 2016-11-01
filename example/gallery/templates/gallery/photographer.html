@@ -1,0 +1,10 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}
+    {{ object.slug|upper }}<br>
+    <small>Photographer</small>
+{% endblock %}
+
+{% block content %}
+    <a href="{% url 'gallery:home' %}">< Back to all photographers</a>
+{% endblock %}
