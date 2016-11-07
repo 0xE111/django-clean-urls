@@ -50,7 +50,7 @@ TIP: All of the source code described below is available in *example* folder. It
 
     mkdir /tmp/clean_urls && cd /tmp/clean_urls
     pyvenv env && source env/bin/activate
-    pip install django django-mptt-urls pillow
+    pip install django django-mptt pillow django-clean-urls
     git clone https://github.com/c0ntribut0r/django-clean-urls
     cd django-clean-urls/example
     ./manage.py runserver    
