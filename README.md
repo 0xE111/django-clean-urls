@@ -46,7 +46,14 @@ However, it's super easy to work with *any* hierarchy, no matter how you organiz
 - django (tested on but not restricted to v1.10)
 
 ## Example
-TIP: All of the source code described below is available in *example* folder. It is a test project already set-up and ready-to-go, so you can `git clone https://github.com/c0ntribut0r/django-clean-urls` and play with it (administrator login/password: admin/rootroot).
+TIP: All of the source code described below is available in *example* folder. It is a test project already set-up and ready-to-go, so you can clone and play with it (administrator login/password: admin/rootroot):
+
+    mkdir /tmp/clean_urls && cd /tmp/clean_urls
+    pyvenv env && source env/bin/activate
+    pip install django django-mptt-urls pillow
+    git clone https://github.com/c0ntribut0r/django-clean-urls
+    cd django-clean-urls/example
+    ./manage.py runserver    
 
 Let's create a photos portfolio (gallery) app with super-complicated hierarchy where we'll cover all use-cases of django-clean-urls.
 
