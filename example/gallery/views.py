@@ -18,3 +18,14 @@ class PhotographerView(DetailView):
 
     def get_object(self, queryset=None):
         return self.instance  # use saved instance
+
+
+class CategoryView(DetailView):
+    template_name = 'gallery/category.html'
+
+    def dispatch(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+        return super().dispatch(*args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.instance

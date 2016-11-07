@@ -5,7 +5,16 @@
 {% endblock %}
 
 {% block content %}
-    {% for photographer in object_list %}
-        <a href="{{ photographer.get_absolute_url }}">{{ photographer.slug }}</a><br>
-    {% endfor %}
+    <table>
+        <tr>
+            {% for photographer in object_list %}
+                <td align="center">
+                    <a href="{{ photographer.get_absolute_url }}">
+                        <img src="/media/{{ photographer.image }}"><br>
+                        {{ photographer.slug }}
+                    </a>
+                </td>
+            {% endfor %}
+        </tr>
+    </table>
 {% endblock %}

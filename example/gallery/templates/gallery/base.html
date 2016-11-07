@@ -1,8 +1,12 @@
-<center>
-    <h1>Cool gallery app</h1>
-    <small>Powered by <a href="https://github.com/c0ntribut0r/django-clean-urls">django-clean-urls</a></small>
-    <hr>
+<small>Powered by <a href="https://github.com/c0ntribut0r/django-clean-urls">django-clean-urls</a></small>
+<hr>
 
-    <h4>{% block title %}{% endblock %}</h4>
-    {% block content %}{% endblock %}
-</center>
+<div style="background-color: #FAFAFA;">
+    Breadcrumbs:
+    <a href="{% url 'gallery:home' %}">Home</a>
+    {% for ancestor in object.get_parents %}
+        / <a href="{{ ancestor.get_absolute_url }}">{{ ancestor }}</a>
+    {% endfor %}
+</div>
+<h4>{% block title %}{% endblock %}</h4>
+{% block content %}{% endblock %}

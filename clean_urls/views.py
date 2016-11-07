@@ -13,6 +13,15 @@ except ImportError:
     TreebeardModel = None
 
 
+def get_related_field(from_model, to_model):
+    # TODO: copy Django's mechanism to search for fk from `from_model` to `to_model` (it definitely has one)
+    related_fields = [field for field in from_model._meta.fields if (isinstance(field, (models.ForeignKey, models.OneToOneField)) and field.related_model == to_model)]
+    if len(related_fields) != 1:
+        raise ImproperlyConfigured('Cannot reslove relation from {from_model} to {to_model}'.format(from_model=from_model, to_model=to_model))
+
+    return related_fields[0].name
+
+
 class CleanURLHandler():
     def __init__(self, *args):
         """
@@ -24,35 +33,28 @@ class CleanURLHandler():
 
         self.settings = args
 
-        # try to define `get_slug` method automatically if possible
+        # try to define `get_parents` method automatically if possible
         parent_model = None
         for queryset, view in self.settings:
             model = queryset.model
 
-            if hasattr(model, 'get_slug'):  # if user already defined `get_slug` method, leave it as is
-                continue
+            if not hasattr(model, 'get_parent') and parent_model:  # try to define `get_parent` automatically if undefined
+                related_field = get_related_field(model, parent_model)
+                model.get_parent = lambda instance: getattr(instance, related_field)  # attrgetter won't work, see http://stackoverflow.com/questions/8906392/python-functions-returned-by-itemgetter-not-working-as-expected-in-classes            
 
-            # define how to get slug for model depending on its class
-            if issubclass(model, MpttModel):
-                get_instance_slug = lambda instance: '/'.join(instance.get_ancestors(include_self=True).values_list('slug', flat=True)) + '/'
-            elif issubclass(model, TreebeardModel):
-                get_instance_slug = lambda instance: '/'.join([ancestor.slug for ancestor in (list(instance.get_ancestors()) + [instance])]) + '/'
-            else:
-                get_instance_slug = lambda instance: instance.slug + '/'
+            def get_parents(instance):  # including self
+                if isinstance(instance, MpttModel):  # Mptt tree node expands to list of all ancestors and the instance itself
+                    expanded = list(instance.get_ancestors(include_self=True))
+                elif isinstance(instance, TreebeardModel):  # same for treebeard
+                    expanded = list(instance.get_ancestors()) + [instance]
+                else:  # single instance is simply converted to a list
+                    expanded = [instance]
 
-            # define how to get parent model's slug
-            get_parent_slug = lambda instance: ''  # default
+                parent = expanded[0].get_parent() if hasattr(expanded[0], 'get_parent') else None
+                return (parent.get_parents() if parent else []) + expanded
 
-            if parent_model:
-                related_fields = [field for field in model._meta.fields if (isinstance(field, (models.ForeignKey, models.OneToOneField)) and field.related_model == parent_model)]
-                if len(related_fields) == 1:
-                    parent_field = related_fields[0].name
-                    get_parent_slug = lambda instance: getattr(instance, parent_field).get_slug()
-                else:
-                    raise ImproperlyConfigured('Cannot reslove relation from {child_model} to {parent_model}, please define `get_slug` method on {child_model} explicitly'.format(child_model=model, parent_model=parent_model))                    
-
-            # define get_slug == parent model's slug + instance's slug
-            model.get_slug = lambda instance: get_parent_slug(instance) + get_instance_slug(instance)
+            model.get_parents = get_parents
+            model.get_slug = lambda instance: '/'.join([parent.slug.lower() for parent in instance.get_parents()]) + '/'
 
             # remember parent model for next iteration
             parent_model = model
@@ -62,7 +64,7 @@ class CleanURLHandler():
         last_slug = slug.split('/')[-2]
 
         for queryset, view in self.settings:
-            matches = [candidate for candidate in queryset.filter(slug=last_slug) if candidate.get_slug() == slug]
+            matches = [candidate for candidate in queryset.filter(slug__iexact=last_slug) if candidate.get_slug() == slug]
             if len(matches) == 1:
                 kwargs['instance'] = matches[0]
                 return view(*args, **kwargs)
