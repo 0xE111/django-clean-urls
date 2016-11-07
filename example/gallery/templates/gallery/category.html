@@ -10,7 +10,20 @@
         {% for category in object.get_children %}
             <li><a href="{{ category.get_absolute_url }}">{{ category.slug }}</a></li>
         {% empty %}
-            <li>Nothing here yet</li>
+            <li>--</li>
+        {% endfor %}
+    </ul>
+
+    {{ object.slug }}'s photos:
+    <ul>
+        {% for photo in object.get_photos %}
+            <li>
+                <a href="{{ photo.get_absolute_url }}"><img src="/media/{{ photo.image }}" width="100"></a>
+            </li>
+        {% empty %}
+            <li>
+                --
+            </li>
         {% endfor %}
     </ul>
 {% endblock %}

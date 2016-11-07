@@ -1,0 +1,9 @@
+{% extends 'gallery/base.html' %}
+
+{% block title %}
+    {{ object.slug|upper }} (Photo)
+{% endblock %}
+
+{% block content %}
+    <img src="/media/{{ photo.image }}">
+{% endblock %}

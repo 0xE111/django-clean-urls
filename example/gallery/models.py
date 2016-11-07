@@ -28,3 +28,21 @@ class Category(MPTTModel):
 
     def get_absolute_url(self):
         return reverse('gallery:generic', kwargs={'slug': self.get_slug()})
+
+    def get_photos(self):
+        return Photo.objects.filter(categories=self)
+
+
+class Photo(models.Model):
+    categories = models.ManyToManyField('Category')
+    image = models.ImageField('image')
+    slug = models.SlugField()
+
+    def __str__(self):
+        return self.slug
+
+    def get_absolute_url(self):
+        return reverse('gallery:generic', kwargs={'slug': self.get_slug()})
+
+    def get_parent(self):
+        return self.categories.first()  # by default, the first category will be treated as parent

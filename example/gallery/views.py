@@ -29,3 +29,14 @@ class CategoryView(DetailView):
 
     def get_object(self, queryset=None):
         return self.instance
+
+
+class PhotoView(DetailView):
+    template_name = 'gallery/photo.html'
+
+    def dispatch(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance')
+        return super().dispatch(*args, **kwargs)
+
+    def get_object(self, queryset=None):
+        return self.instance

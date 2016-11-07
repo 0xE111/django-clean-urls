@@ -123,7 +123,7 @@ That's it - now calling `Photographer.objects.get(slug='jill').get_absolute_url(
 Now we need to go deeper ©
 
 #### Depth 2: Categories
-Now let's make our app more complex. Let's allow each photographer to have his own categories and photos inside them.
+Now let's make our app more complex. Let's allow each photographer to have his own categories tree structure. We'll use django-mptt for this purpose.
 ```python
     # gallery/models.py
     from mptt.models import MPTTModel, TreeForeignKey
@@ -150,4 +150,65 @@ Have a look at new `urls.py`:
             name='generic'
         ),
     ]
+```
+
+Now `CleanURLHandler` knows that `Category` is `Photographer`'s child and can access its parent through `photographer` field.
+> *How does CleanURLHandler know about ForeignKey from Category to Photographer?*
+> Answer: It searches for ForeignKey or OneToOneKey from Category to Photographer. If there is exactly one such field, there will be created method called "get_parent" which follows the relation. Otherwise you need manually create "get_parent" method.
+
+`CleanURLHandler` also sees that `Category` is of `MPTTModel` (it is a tree structure, in other words), and "expands" it so that slug may be like
+
+   jane/root-category/subcategory/subsubcategory/
+
+#### Depth 3: Photos
+We still lack photos in our gallery app. Let's fix this!
+```python
+    # gallery/models.py
+
+    class Photo(models.Model):
+        categories = models.ManyToManyField('Category')
+        image = models.ImageField('image')
+        slug = models.SlugField()
+
+        def get_absolute_url(self):
+            return reverse('gallery:generic', kwargs={'slug': self.get_slug})
+
+    # gallery/urls.py
+        # ...
+        url(
+            r'^(?P<slug>([-\w]+/)+)$',
+            CleanURLHandler(
+                (Photographer.objects.all(), PhotographerView.as_view()),
+                (Category.objects.all(), CategoryView.as_view()),
+                (Photo.objects.all(), PhotoView.as_view()),  # and Category may contain Photos within
+            ),
+            name='generic'
+        ),
+```
+
+Look carefully at `models.py`: any photo may reside in several categories (ManyToManyField). That's meaningful: if photo contains a person in the forest, it fits both "people" and "nature" categories. `CleanURLHandler` cannot guess how to get parent `Category` for any `Photo` instance, and raises an exception:
+
+    django.core.exceptions.ImproperlyConfigured: Cannot reslove relation from <class 'gallery.models.Photo'> to <class 'gallery.models.Category'>
+
+To fix this, let's define `get_parent` method:
+```python
+    # gallery/models.py
+    class Photo(models.Model):
+        categories = models.ManyToManyField('Category')
+        ...
+
+        def get_parent(self):
+            return self.categories.first()  # by default, the first category will be treated as parent
+```
+
+So, if `Photo` "Maria" is in both "People" and "Nature" categories, its slug will be *only one* of
+- jane/people/maria/maria-on-the-shore/
+- jane/nature/maria-on-the-shore/
+depending on what `self.categories.first()` returns.
+
+#### Breadcrumbs
+Every model defined in `CleanURLHandler` also has a method `get_parents` which will return all parents including the instance itself. For example,
+```python
+    In [7]: Photo.objects.get(slug='maria-on-the-shore').get_absolute_url()
+    Out[7]: '/jane/people/maria/maria-on-the-shore/'
 ```

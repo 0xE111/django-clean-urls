@@ -53,6 +53,7 @@ class CleanURLHandler():
                 parent = expanded[0].get_parent() if hasattr(expanded[0], 'get_parent') else None
                 return (parent.get_parents() if parent else []) + expanded
 
+            # TODO: These magic methods are created only when urls.py is imported -> ./manage.py shell won't fire the following code
             model.get_parents = get_parents
             model.get_slug = lambda instance: '/'.join([parent.slug.lower() for parent in instance.get_parents()]) + '/'
 
