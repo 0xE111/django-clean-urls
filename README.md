@@ -37,7 +37,7 @@ These URLs are ["clean" / "semantic"](https://en.wikipedia.org/wiki/Semantic_URL
 ## Third-party app support
 Django-clean-urls supports two main tree-structure apps for Django:
 
-- django-mptt-urls
+- django-mptt
 - django-treebeard
 
 However, it's super easy to work with *any* hierarchy, no matter how you organize it.
