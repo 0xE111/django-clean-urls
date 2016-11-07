@@ -201,14 +201,18 @@ To fix this, let's define `get_parent` method:
             return self.categories.first()  # by default, the first category will be treated as parent
 ```
 
-So, if `Photo` "Maria" is in both "People" and "Nature" categories, its slug will be *only one* of
+So, if `Photo` "Maria" is in both "People" and "Nature" categories, its slug will be **only one** of
 - jane/people/maria/maria-on-the-shore/
 - jane/nature/maria-on-the-shore/
 depending on what `self.categories.first()` returns.
 
 #### Breadcrumbs
-Every model defined in `CleanURLHandler` also has a method `get_parents` which will return all parents including the instance itself. For example,
+Every model defined in `CleanURLHandler` also has a method `get_parents` which will return all parents including the instance itself - nice feature for breadcrumbs generation! For example,
 ```python
-    In [7]: Photo.objects.get(slug='maria-on-the-shore').get_absolute_url()
-    Out[7]: '/jane/people/maria/maria-on-the-shore/'
+    In [4]: Photo.objects.get(slug='maria-on-the-shore').get_parents()
+    Out[4]: 
+    [<Photographer: jane>,
+     <Category: People>,
+     <Category: Maria>,
+     <Photo: maria-on-the-shore>]
 ```
