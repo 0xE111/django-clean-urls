@@ -17,6 +17,6 @@ urlpatterns = [
             (Photo.objects.all(), PhotoView.as_view()),  # and Category may contain Photos within
             # ... don't stop! :)
         ),
-        name='generic'  # needed for reverse url resolution; call it "generic" because this url can point to many different objects
+        name='generic'  # needed for reverse url resolution; call it "generic" because this url can point to different objects
     ),
 ]
